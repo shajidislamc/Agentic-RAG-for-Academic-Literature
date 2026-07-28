@@ -104,7 +104,7 @@ def critic_node(state: AgentState) -> Dict[str, Any]:
     }}
     """
 
-    response = llm.invoke(SystemMessage(content=prompt))
+    response = llm.invoke([SystemMessage(content=prompt)])
 
     try:
         res_json = json.loads(response.content.strip())
@@ -162,7 +162,8 @@ def synthesizer_node(state: AgentState) -> Dict[str, Any]:
     """
 
     response = llm.invoke([SystemMessage(content=prompt)])
-    return {f"final_report": response.content}
+    return {"final_report": response.content}
+
 
 # Graph routing ad Compilation
 def should_continue(state: AgentState) -> str:
@@ -176,7 +177,7 @@ def should_continue(state: AgentState) -> str:
 builder = StateGraph(AgentState)
 
 builder.add_node("planner",planner_node)
-builder.add_node("retriver",retriever_node)
+builder.add_node("retriever",retriever_node)
 builder.add_node("critic",critic_node)
 builder.add_node("synthesizer",synthesizer_node)
 
