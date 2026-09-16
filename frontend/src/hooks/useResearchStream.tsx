@@ -22,7 +22,7 @@ export function useResearchStream() {
     setCurrentNode('');
 
     try {
-      const response = await fetch('http://localhost:8000/api/research/stream', {
+      const response = await fetch('/api/research/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query, thread_id: Date.now().toString() }),
