@@ -9,7 +9,7 @@ export function useResearchStream() {
   const startResearch = async (query: string) => {
     setIsStreaming(true);
     setStreamedText('');
-    setStatus('Connecting to engine...');
+    setStatus('Initializing research graph...');
     setCurrentNode('');
 
     try {
@@ -39,15 +39,20 @@ export function useResearchStream() {
 
             if (data.type === 'status') setStatus(data.content);
             if (data.type === 'node_start') setCurrentNode(data.node);
-            if (data.type === 'token') {
-              setStreamedText((prev) => prev + data.content);
+            
+            // Filter out JSON state leaks and only accept stream tokens
+            if (data.type === 'token' && typeof data.content === 'string') {
+              const content = data.content;
+              if (!content.startsWith('[') && !content.startsWith('{')) {
+                setStreamedText((prev) => prev + content);
+              }
             }
           }
         }
       }
     } catch (err) {
       console.error('Streaming error:', err);
-      setStatus('Error connecting to research engine.');
+      setStatus('Error connecting to backend server.');
     } finally {
       setIsStreaming(false);
     }
