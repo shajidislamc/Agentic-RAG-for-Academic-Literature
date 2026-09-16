@@ -28,6 +28,12 @@ export function useResearchStream() {
         body: JSON.stringify({ query, thread_id: Date.now().toString() }),
       });
 
+      // Add explicit error handling for backend HTTP errors (500, 502, 404, etc.)
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || `Server returned status ${response.status}`);
+      }
+
       if (!response.body) return;
 
       const reader = response.body.getReader();
