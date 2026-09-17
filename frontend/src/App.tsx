@@ -34,17 +34,19 @@ export default function App() {
     URL.revokeObjectURL(url);
   };
 
-// --- Export as PDF (.pdf) ---
+  // --- Export as PDF (.pdf) ---
   const handleDownloadPDF = () => {
     const element = document.getElementById('report-content');
     if (!element || !streamedText) return;
 
+    window.scrollTo(0, 0);
+
     const opt = {
       margin: 15,
       filename: `literature_review_${Date.now()}.pdf`,
-      image: { type: 'jpeg' as const, quality: 0.98 }, // <--- Added 'as const'
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const } // <--- Added 'as const'
+      image: { type: 'jpeg' as const, quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, windowWidth: 1200 },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
     };
 
     html2pdf().set(opt).from(element).save();
@@ -275,10 +277,65 @@ export default function App() {
             </div>
           )}
 
-          {/* Report Container (Targeted for PDF conversion) */}
+          {/* Report Container (Targeted for PDF conversion & Rendered Markdown) */}
           {streamedText ? (
             <div id="report-content" className="markdown-body">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{streamedText}</ReactMarkdown>
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  // Wraps every markdown table in a horizontally scrollable container with min-width constraint
+                  table: ({ node, ...props }) => (
+                    <div
+                      style={{
+                        overflowX: 'auto',
+                        width: '100%',
+                        margin: '20px 0',
+                        borderRadius: '8px',
+                        border: '1px solid #E2E8F0',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
+                      }}
+                    >
+                      <table
+                        style={{
+                          width: '100%',
+                          minWidth: '750px', // Forces horizontal sliding scrollbar when view width shrinks
+                          borderCollapse: 'collapse',
+                          fontSize: '14px',
+                          textAlign: 'left'
+                        }}
+                        {...props}
+                      />
+                    </div>
+                  ),
+                  th: ({ node, ...props }) => (
+                    <th
+                      style={{
+                        backgroundColor: '#F8FAFC',
+                        color: '#1E293B',
+                        fontWeight: 700,
+                        padding: '12px 16px',
+                        borderBottom: '2px solid #E2E8F0',
+                        borderRight: '1px solid #F1F5F9'
+                      }}
+                      {...props}
+                    />
+                  ),
+                  td: ({ node, ...props }) => (
+                    <td
+                      style={{
+                        padding: '12px 16px',
+                        borderBottom: '1px solid #E2E8F0',
+                        borderRight: '1px solid #F1F5F9',
+                        color: '#334155',
+                        verticalAlign: 'top'
+                      }}
+                      {...props}
+                    />
+                  )
+                }}
+              >
+                {streamedText}
+              </ReactMarkdown>
             </div>
           ) : (
             <div style={{ textAlign: 'center', padding: '60px 0', color: '#94A3B8' }}>
