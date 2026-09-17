@@ -120,14 +120,14 @@ User Research Question
 - **Unified Deployment** — A multi-stage Docker container builds the React frontend and serves the resulting static assets alongside the FastAPI backend.
 - **GitHub-Flavored Markdown Rendering** — Generated literature reviews support structured Markdown, including tables and comparative literature summaries.
 - **Iterative Query Refinement** — The critic can trigger another retrieval cycle when the retrieved literature does not provide sufficient coverage.
-
+- **Multi-Format Report Export** — Download synthesized literature reviews as formatted **PDF** documents or raw **Markdown (`.md`)** files with a single click.
 ---
 
 ## Tech Stack
 
 | Layer | Technology | Primary Role |
 | :--- | :--- | :--- |
-| **Frontend** | ![React](https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB) ![Vite](https://img.shields.io/badge/Vite-646CFF?logo=vite&logoColor=white) ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white) | UI components, state management, and SSE consumption |
+| **Frontend** | ![React](https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB) ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white) ![Vite](https://img.shields.io/badge/Vite-646CFF?logo=vite&logoColor=white) ![React Markdown](https://img.shields.io/badge/React_Markdown-61DAFB?logo=markdown&logoColor=black) ![Remark GFM](https://img.shields.io/badge/Remark_GFM-000000?logo=markdown&logoColor=white) ![html2pdf.js](https://img.shields.io/badge/html2pdf.js-FF6B6B?logo=javascript&logoColor=white) | UI components, Markdown rendering, report export, state management, and SSE consumption |logo=typescript&logoColor=white) | UI components, state management, and SSE consumption |
 | **Orchestration** | ![LangGraph](https://img.shields.io/badge/LangGraph-1C3C3C?logo=langchain&logoColor=white) ![LangChain](https://img.shields.io/badge/LangChain-1C3C3C?logo=langchain&logoColor=white) | Stateful graph execution, conditional routing, and cyclic workflows |
 | **LLM Inference** | ![Groq](https://img.shields.io/badge/Groq-F55036?logo=groq&logoColor=white) `openai/gpt-oss-120b` | Planning, evaluation, and literature synthesis |
 | **Data Provider** | ![ArXiv](https://img.shields.io/badge/ArXiv-B31B1B?logo=arxiv&logoColor=white) ![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white) [![SDK](https://img.shields.io/badge/SDK-6C757D?logoColor=white)](https://pypi.org/project/arxiv/) | Academic paper metadata and abstract retrieval |
@@ -156,7 +156,7 @@ User Research Question
     │   └── main.tsx          # React application entry point
     │
     ├── package.json          # Node.js dependencies and scripts
-    └── vite.config.ts        # Vite configuration and proxy rules
+    └── vite.config.ts        # Vite configuration, chunking, and proxy rules
 ```
 
 ---

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+// @ts-ignore (If TypeScript throws a missing declaration error for html2pdf.js)
+import html2pdf from 'html2pdf.js';
 import { useResearchStream } from './hooks/useResearchStream';
 
 export default function App() {
@@ -18,6 +20,36 @@ export default function App() {
     }
   };
 
+  // --- Export as Markdown (.md) ---
+  const handleDownloadMarkdown = () => {
+    if (!streamedText) return;
+    const blob = new Blob([streamedText], { type: 'text/markdown;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `literature_review_${Date.now()}.md`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+// --- Export as PDF (.pdf) ---
+  const handleDownloadPDF = () => {
+    const element = document.getElementById('report-content');
+    if (!element || !streamedText) return;
+
+    const opt = {
+      margin: 15,
+      filename: `literature_review_${Date.now()}.pdf`,
+      image: { type: 'jpeg' as const, quality: 0.98 }, // <--- Added 'as const'
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const } // <--- Added 'as const'
+    };
+
+    html2pdf().set(opt).from(element).save();
+  };
+
   const getNodeBadgeColor = (node: string) => {
     switch (node.toLowerCase()) {
       case 'planner': return { bg: '#FEF3C7', text: '#92400E', border: '#FDE68A' };
@@ -32,7 +64,7 @@ export default function App() {
     <div style={{ minHeight: '100vh', backgroundColor: '#F8FAFC', padding: '40px 20px', fontFamily: 'Inter, system-ui, sans-serif' }}>
       <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
         
-        {/* Header with Settings Toggle */}
+        {/* Header */}
         <header style={{ textAlign: 'center', marginBottom: '24px', position: 'relative' }}>
           <button 
             onClick={() => setShowSettings(!showSettings)}
@@ -79,13 +111,10 @@ export default function App() {
                 boxSizing: 'border-box'
               }}
             />
-            <span style={{ fontSize: '12px', color: '#94A3B8', marginTop: '4px', display: 'block' }}>
-              Provide your own free Groq key to bypass shared demo rate limits.
-            </span>
           </div>
         )}
 
-        {/* Input Bar */}
+        {/* Search Input Bar */}
         <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
           <input
             type="text"
@@ -199,7 +228,7 @@ export default function App() {
           </div>
         )}
 
-        {/* Final Output */}
+        {/* Final Synthesizer Output Canvas */}
         <main style={{
           backgroundColor: '#FFFFFF',
           borderRadius: '12px',
@@ -210,8 +239,45 @@ export default function App() {
           lineHeight: 1.7,
           color: '#334155'
         }}>
+          {/* Header Action Bar with Download Buttons */}
+          {streamedText && (
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginBottom: '20px', borderBottom: '1px solid #F1F5F9', paddingBottom: '12px' }}>
+              <button
+                onClick={handleDownloadMarkdown}
+                style={{
+                  padding: '6px 12px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  borderRadius: '6px',
+                  border: '1px solid #CBD5E1',
+                  backgroundColor: '#F8FAFC',
+                  color: '#334155',
+                  cursor: 'pointer'
+                }}
+              >
+                📥 Export Markdown (.md)
+              </button>
+              <button
+                onClick={handleDownloadPDF}
+                style={{
+                  padding: '6px 12px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  borderRadius: '6px',
+                  border: '1px solid #BFDBFE',
+                  backgroundColor: '#EFF6FF',
+                  color: '#1D4ED8',
+                  cursor: 'pointer'
+                }}
+              >
+                📄 Export PDF (.pdf)
+              </button>
+            </div>
+          )}
+
+          {/* Report Container (Targeted for PDF conversion) */}
           {streamedText ? (
-            <div className="markdown-body">
+            <div id="report-content" className="markdown-body">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>{streamedText}</ReactMarkdown>
             </div>
           ) : (
