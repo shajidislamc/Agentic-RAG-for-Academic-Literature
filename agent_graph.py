@@ -28,12 +28,24 @@ class AgentState(TypedDict):
     final_report: str
 
 
+# Use key from state if user provided BYOK key, else fallback to env variable
+def get_llm(state: dict):
+    
+    api_key = state.get("groq_api_key") or os.getenv("GROQ_API_KEY")
+    return ChatGroq(
+        model_name="llama-3.3-70b-versatile",
+        groq_api_key=api_key,
+        temperature=0.2
+    )
+
 # Agent Nodes
 
 #Planner
 def planner_node(state:AgentState) -> Dict[str,Any]:
     """Deconstruct the user query into specific academic search queries."""
     print("\n PLANNER AGENT analyzing query and creating research sub-goals...")
+
+    llm = get_llm(state)
 
     prompt = f"""You are a Senior Academic Research Planner.
     Deconstruct the following research topic into 2-3 specific, targeted academic search queries suitable for ArXiv.
@@ -83,6 +95,8 @@ def retriever_node(state: AgentState) -> Dict[str, Any]:
 def critic_node(state: AgentState) -> Dict[str, Any]:
     """Evaluate whether retrieved papers provide sufficient context."""
     print("\n CRITIC AGENT evaluating coverage and source quality..")
+
+    llm = get_llm(state)
 
     iteration = state.get("iteration_count",0)+1
     papers_summary = "\n".join([
@@ -140,6 +154,8 @@ def critic_node(state: AgentState) -> Dict[str, Any]:
 def synthesizer_node(state: AgentState) -> Dict[str, Any]:
     """Synthesize all findings into a structured, cited academic literature review."""
     print("\n   SYNTHESIZER AGENT generating structured literature review ...")
+
+    llm = get_llm(state)
 
     papers_context = ""
     for i,p in enumerate(state["retrieved_papers"],1):

@@ -14,7 +14,7 @@ export function useResearchStream() {
   const [isStreaming, setIsStreaming] = useState<boolean>(false);
   const [logs, setLogs] = useState<AgentLog[]>([]);
 
-  const startResearch = async (query: string) => {
+  const startResearch = async (query: string, customApiKey?: string) => {
     setIsStreaming(true);
     setStreamedText('');
     setLogs([]);
@@ -25,10 +25,13 @@ export function useResearchStream() {
       const response = await fetch('/api/research/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query, thread_id: Date.now().toString() }),
+        body: JSON.stringify({ 
+          query, 
+          thread_id: Date.now().toString(),
+          api_key: customApiKey || undefined 
+        }),
       });
 
-      // Add explicit error handling for backend HTTP errors (500, 502, 404, etc.)
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.detail || `Server returned status ${response.status}`);
@@ -63,17 +66,20 @@ export function useResearchStream() {
                 setCurrentNode(data.node);
               }
 
+              if (data.type === 'error') {
+                setStatus(data.message);
+                setIsStreaming(false);
+                return;
+              }
+
               if (data.type === 'token' && typeof data.content === 'string') {
                 const content = data.content;
 
-                // Route tokens: intermediate agent thoughts go to logs, Synthesizer tokens go to document
                 if (activeNode === 'synthesizer') {
-                  // Prevent any leftover leading JSON bracket leakage
                   if (!content.startsWith('{') && !content.startsWith('[')) {
                     setStreamedText((prev) => prev + content);
                   }
                 } else {
-                  // Capture intermediate agent reasoning
                   if (content.trim()) {
                     setLogs((prev) => {
                       const last = prev[prev.length - 1];
@@ -102,9 +108,9 @@ export function useResearchStream() {
           }
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Streaming error:', err);
-      setStatus('Error connecting to backend engine.');
+      setStatus(err.message || 'Error connecting to backend engine.');
     } finally {
       setIsStreaming(false);
     }

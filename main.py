@@ -1,8 +1,10 @@
 import os
 import json
 import asyncio
+import time
 from typing import AsyncGenerator, Optional
-from fastapi import FastAPI, HTTPException
+from collections import defaultdict
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -26,9 +28,35 @@ app.add_middleware(
     allow_headers=["*"]      
 )
 
+# In-Memory IP Rate Limiter
+IP_REQUEST_LOGS = defaultdict(list)
+RATE_LIMIT_WINDOW = 60  # seconds
+MAX_REQUESTS_PER_WINDOW = 1  # 1 request per minute per IP
+
+def rate_limit_guard(request: Request):
+    # Retrieve true client IP behind Render reverse proxy
+    client_ip = request.headers.get("x-forwarded-for", request.client.host if request.client else "unknown").split(",")[0].strip()
+    now = time.time()
+    
+    # Filter timestamps within current window
+    timestamps = [ts for ts in IP_REQUEST_LOGS[client_ip] if now - ts < RATE_LIMIT_WINDOW]
+    IP_REQUEST_LOGS[client_ip] = timestamps
+
+    if len(timestamps) >= MAX_REQUESTS_PER_WINDOW:
+        raise HTTPException(
+            status_code=429, 
+            detail="Rate limit reached: Demo allows 1 research query per minute per IP. Please wait or use your own Groq API key."
+        )
+    
+    IP_REQUEST_LOGS[client_ip].append(now)
+
+
+# Request Schema with Optional BYOK (Bring Your Own Key)
 class ResearchRequest(BaseModel):
     query: str
     thread_id: Optional[str] = "default_thread"
+    api_key: Optional[str] = None
+
 
 # API Endpoint
 @app.get("/api/health")
@@ -37,11 +65,14 @@ def health_check():
     return {"status": "online", "message": "Agentic RAG Literature Engine is active."}
 
 
-async def stream_graph_events(user_query: str, thread_id: str) -> AsyncGenerator[str, None]:
+async def stream_graph_events(user_query: str, thread_id: str, custom_api_key: Optional[str] = None) -> AsyncGenerator[str, None]:
     """
     Asynchronously executes the LangGraph workflow and yields Server-Sent Events (SSE)
     tracking agent progress and token streaming.
     """
+
+    # Pass user_key down to graph state if provided, otherwise fallback to server env key
+    active_api_key = custom_api_key if custom_api_key and custom_api_key.strip() else os.getenv("GROQ_API_KEY")
 
     initial_state = {"user_query": user_query}
     config = {"configurable": {"thread_id": thread_id}}
@@ -90,8 +121,13 @@ async def stream_graph_events(user_query: str, thread_id: str) -> AsyncGenerator
     except asyncio.CancelledError:
         print(f"Client disconnected from thread: {thread_id}")
 
+# Catch 429 Errors 
     except Exception as e:
-        error_payload = {"type": "error", "message": str(e)}
+        err_msg = str(e)
+        if "429" in err_msg or "rate_limit" in err_msg.lower() or "tpm" in err_msg.lower():
+            err_msg = "⚠️ Groq API Free-Tier Rate Limit Reached! Please wait 60 seconds before trying again, or provide your own Groq API key in Settings."
+            
+        error_payload = {"type": "error", "message": err_msg}
         yield f"data: {json.dumps(error_payload)}\n\n"
 
 

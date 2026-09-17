@@ -5,13 +5,16 @@ import { useResearchStream } from './hooks/useResearchStream';
 
 export default function App() {
   const [query, setQuery] = useState('');
+  const [customApiKey, setCustomApiKey] = useState('');
+  const [showSettings, setShowSettings] = useState(false);
   const [showLogs, setShowLogs] = useState(true);
+  
   const { startResearch, streamedText, status, currentNode, isStreaming, logs } = useResearchStream();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
-      startResearch(query);
+      startResearch(query, customApiKey);
     }
   };
 
@@ -29,8 +32,25 @@ export default function App() {
     <div style={{ minHeight: '100vh', backgroundColor: '#F8FAFC', padding: '40px 20px', fontFamily: 'Inter, system-ui, sans-serif' }}>
       <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
         
-        {/* Header */}
-        <header style={{ textAlign: 'center', marginBottom: '32px' }}>
+        {/* Header with Settings Toggle */}
+        <header style={{ textAlign: 'center', marginBottom: '24px', position: 'relative' }}>
+          <button 
+            onClick={() => setShowSettings(!showSettings)}
+            style={{
+              position: 'absolute',
+              right: 0,
+              top: 0,
+              padding: '8px 14px',
+              fontSize: '13px',
+              borderRadius: '6px',
+              border: '1px solid #CBD5E1',
+              backgroundColor: '#FFFFFF',
+              cursor: 'pointer',
+              color: '#475569'
+            }}
+          >
+            ⚙️ Settings
+          </button>
           <h1 style={{ fontSize: '32px', fontWeight: 800, color: '#0F172A', margin: '0 0 8px 0', letterSpacing: '-0.02em' }}>
             🎓 Academic Literature Agent
           </h1>
@@ -38,6 +58,32 @@ export default function App() {
             Autonomous Multi-Agent RAG Engine powered by LangGraph, FastAPI, Groq & ArXiv
           </p>
         </header>
+
+        {/* Collapsible BYOK Settings Bar */}
+        {showSettings && (
+          <div style={{ padding: '16px', backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', marginBottom: '20px' }}>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+              Custom Groq API Key (Optional):
+            </label>
+            <input
+              type="password"
+              value={customApiKey}
+              onChange={(e) => setCustomApiKey(e.target.value)}
+              placeholder="gsk_..."
+              style={{
+                width: '100%',
+                padding: '10px',
+                fontSize: '14px',
+                borderRadius: '6px',
+                border: '1px solid #CBD5E1',
+                boxSizing: 'border-box'
+              }}
+            />
+            <span style={{ fontSize: '12px', color: '#94A3B8', marginTop: '4px', display: 'block' }}>
+              Provide your own free Groq key to bypass shared demo rate limits.
+            </span>
+          </div>
+        )}
 
         {/* Input Bar */}
         <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
@@ -79,15 +125,17 @@ export default function App() {
         {(status || currentNode) && (
           <div style={{
             padding: '14px 20px',
-            backgroundColor: '#EFF6FF',
+            backgroundColor: status.includes('⚠️') || status.includes('Rate limit') ? '#FEF2F2' : '#EFF6FF',
             borderRadius: '10px',
-            border: '1px solid #BFDBFE',
+            border: `1px solid ${status.includes('⚠️') || status.includes('Rate limit') ? '#FCA5A5' : '#BFDBFE'}`,
             marginBottom: '20px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between'
           }}>
-            <span style={{ color: '#1E40AF', fontWeight: 600, fontSize: '14px' }}>{status}</span>
+            <span style={{ color: status.includes('⚠️') || status.includes('Rate limit') ? '#991B1B' : '#1E40AF', fontWeight: 600, fontSize: '14px' }}>
+              {status}
+            </span>
             {currentNode && (
               <span style={{
                 backgroundColor: '#DBEAFE',
@@ -151,7 +199,7 @@ export default function App() {
           </div>
         )}
 
-        {/* Final Synthesizer Research Output */}
+        {/* Final Output */}
         <main style={{
           backgroundColor: '#FFFFFF',
           borderRadius: '12px',
@@ -175,37 +223,6 @@ export default function App() {
           )}
         </main>
       </div>
-
-      {/* Global Markdown Styles */}
-      <style>{`
-        .markdown-body h1 { font-size: 24px; border-bottom: 2px solid #E2E8F0; padding-bottom: 8px; margin-top: 24px; color: #0F172A; }
-        .markdown-body h2 { font-size: 20px; margin-top: 20px; color: #1E293B; }
-        .markdown-body h3 { font-size: 16px; margin-top: 16px; color: #334155; }
-        .markdown-body p { margin-bottom: 16px; }
-        .markdown-body ul, .markdown-body ol { padding-left: 24px; margin-bottom: 16px; }
-        .markdown-body li { margin-bottom: 6px; }
-        
-        .markdown-body table { 
-          display: block; 
-          width: 100%; 
-          overflow-x: auto; 
-          border-collapse: collapse; 
-          margin: 20px 0; 
-          font-size: 14px; 
-        }
-        .markdown-body th, .markdown-body td { 
-          border: 1px solid #CBD5E1; 
-          padding: 10px 14px; 
-          text-align: left; 
-          min-width: 130px; 
-          white-space: normal; 
-        }
-        .markdown-body th { background-color: #F1F5F9; font-weight: 600; color: #0F172A; }
-        .markdown-body tr:nth-child(even) { background-color: #F8FAFC; }
-        
-        .markdown-body code { background-color: #F1F5F9; padding: 2px 6px; border-radius: 4px; font-size: 13px; font-family: monospace; }
-        .markdown-body blockquote { border-left: 4px solid #2563EB; padding-left: 16px; margin: 16px 0; color: #475569; font-style: italic; }
-      `}</style>
     </div>
   );
 }
