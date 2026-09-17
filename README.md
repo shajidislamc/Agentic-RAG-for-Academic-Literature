@@ -384,13 +384,12 @@ Quality Critic
 Potential directions for extending the system include:
 
 - [ ] Support for additional academic databases such as Semantic Scholar and Crossref
-- [ ] PDF retrieval and full-text paper analysis
+- [ ] Full-text paper analysis
 - [ ] Persistent research sessions
 - [ ] Citation graph exploration
 - [ ] Paper deduplication and ranking
 - [ ] Improved evaluation benchmarks for retrieval quality
 - [ ] User-configurable search depth and refinement thresholds
-- [ ] Export generated reviews to PDF or DOCX
 - [ ] Authentication and multi-user sessions
 
 ---
