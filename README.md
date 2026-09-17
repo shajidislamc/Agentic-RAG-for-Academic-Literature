@@ -362,6 +362,9 @@ Quality Critic
                 │
                 ▼
       Structured Literature Review
+                │
+                ▼
+    [ Export PDF / Markdown ]      
 ```
 
 ---
